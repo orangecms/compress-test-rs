@@ -4,7 +4,7 @@ use std::env;
 use std::fs;
 use std::io::Write;
 
-const COMPRESSED_SIZE: usize = 0x800000;
+const COMPRESSED_SIZE: usize = 0xc00000;
 const EI: usize = 12; // offset bits
 const ORIGINAL_FILE: &str = "Image";
 const COMPRESSED_FILE: &str = "Image.lzss";
