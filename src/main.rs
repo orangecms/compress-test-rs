@@ -6,9 +6,11 @@ use std::io::Write;
 
 const COMPRESSED_SIZE: usize = 0x800000;
 const EI: usize = 12; // offset bits
-const ORIGINAL_FILE: &str = "Image";
+const ORIGINAL_FILE: &str = "Image2";
 const COMPRESSED_FILE: &str = "Image.lzss";
 const UNCOMPRESSED_FILE: &str = "Image.unlzss";
+const GZCOMPRESSED_FILE: &str = "Image.gz";
+const GZUNCOMPRESSED_FILE: &str = "Image.ungz";
 
 fn main() {
     // offset_bits aka EI, usually 10..13
@@ -21,8 +23,36 @@ fn main() {
     println!("read original file.....");
     let original = fs::read(ORIGINAL_FILE).expect("no no file");
     let size = original.len();
+    println!("file size: {size}");
 
+    /*
     println!("compress.....");
+    let compressed = original
+        .into_iter()
+        .encode(&mut GZipEncoder::new(), Action::Finish)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    println!("success: {:?}\n", compressed.len());
+    println!("write compressed file.....");
+    let mut file = fs::File::create(GZCOMPRESSED_FILE).unwrap();
+    file.write_all(&compressed).unwrap();
+    */
+
+    println!("read back compressed file.....");
+    let compressed = fs::read(GZCOMPRESSED_FILE).expect("no no file");
+    println!("file size: {}", compressed.len());
+
+    println!("decompress.....");
+    let decompressed = compressed
+        .into_iter()
+        .decode(&mut GZipDecoder::new())
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    println!("success: {:?}\n", decompressed.len());
+    let mut file = fs::File::create(GZUNCOMPRESSED_FILE).unwrap();
+    file.write_all(&decompressed).unwrap();
+
+    /*
     // from test run: 8207254
     let mut output = vec![0; COMPRESSED_SIZE];
     let result = MyLzss::compress(
@@ -57,19 +87,5 @@ fn main() {
         }
         Err(r) => println!("error: {r}\n"),
     }
+    */
 }
-
-/*
-let compressed = b"aabbaabbaabbaabb\n"
-    .into_iter()
-    .cloned()
-    .encode(&mut LzssEncoder::new(9), Action::Finish)
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap();
-*/
-/*
-let deocder = LzssDecoder::new(SIZE);
-let decompressed = compressed.into_iter().cloned().
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap();
-*/
