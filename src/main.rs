@@ -1,6 +1,4 @@
-use compression::prelude::*;
 use lzss::Lzss;
-use std::env;
 use std::fs;
 use std::io::Write;
 
@@ -23,7 +21,6 @@ fn main() {
     let size = original.len();
 
     println!("compress.....");
-    // from test run: 8207254
     let mut output = vec![0; COMPRESSED_SIZE];
     let result = MyLzss::compress(
         lzss::SliceReader::new(&original),
@@ -48,7 +45,7 @@ fn main() {
         lzss::SliceReader::new(&compressed),
         lzss::SliceWriter::new(&mut output),
     );
-    // assert_eq!(result, Ok(14)); // there was no overflow and the output is 14 bytes long
+
     match result {
         Ok(r) => {
             println!("success: {r}\n");
@@ -58,18 +55,3 @@ fn main() {
         Err(r) => println!("error: {r}\n"),
     }
 }
-
-/*
-let compressed = b"aabbaabbaabbaabb\n"
-    .into_iter()
-    .cloned()
-    .encode(&mut LzssEncoder::new(9), Action::Finish)
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap();
-*/
-/*
-let deocder = LzssDecoder::new(SIZE);
-let decompressed = compressed.into_iter().cloned().
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap();
-*/
