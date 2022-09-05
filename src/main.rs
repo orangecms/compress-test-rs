@@ -4,9 +4,6 @@ use std::io::Write;
 
 const COMPRESSED_SIZE: usize = 0xc00000;
 const EI: usize = 12; // offset bits
-const ORIGINAL_FILE: &str = "Image";
-const COMPRESSED_FILE: &str = "Image.lzss";
-const UNCOMPRESSED_FILE: &str = "Image.unlzss";
 
 fn main() {
     // offset_bits aka EI, usually 10..13
@@ -17,8 +14,12 @@ fn main() {
     type MyLzss = Lzss<EI, 4, 0x00, { 1 << EI }, { 2 << EI }>;
 
     println!("read original file.....");
-    let original = fs::read(ORIGINAL_FILE).expect("no no file");
+    let filename = std::env::args().nth(1).expect("pass a file name");
+    let original = fs::read(filename.as_str()).expect("no such file");
     let size = original.len();
+    // we need temporary copies here - fine
+    let compressed_file = String::from(filename.as_str()) + ".lzss";
+    let uncompressed_file = String::from(filename.as_str()) + ".unlzss";
 
     println!("compress.....");
     let mut output = vec![0; COMPRESSED_SIZE];
@@ -30,14 +31,16 @@ fn main() {
         Ok(r) => {
             println!("success: {r}\n");
             println!("write compressed file.....");
-            let mut file = fs::File::create(COMPRESSED_FILE).unwrap();
+            // this here needs to be a temporary copy
+            let mut file = fs::File::create(compressed_file.as_str()).unwrap();
             file.write_all(&output[..r]).unwrap();
         }
         Err(r) => println!("error: {r}\n"),
     }
 
     println!("read back compressed file.....");
-    let compressed = fs::read(COMPRESSED_FILE).expect("no no file");
+    // because compressed_file is used twice - though only to read from...?!
+    let compressed = fs::read(compressed_file.as_str()).expect("compressed file got lost");
 
     println!("decompress.....");
     let mut output = vec![0; size];
@@ -49,7 +52,7 @@ fn main() {
     match result {
         Ok(r) => {
             println!("success: {r}\n");
-            let mut file = fs::File::create(UNCOMPRESSED_FILE).unwrap();
+            let mut file = fs::File::create(uncompressed_file).unwrap();
             file.write_all(&output).unwrap();
         }
         Err(r) => println!("error: {r}\n"),
