@@ -22,18 +22,17 @@ fn main() {
 
     println!("compress.....");
     let mut output = vec![0; COMPRESSED_SIZE];
-    let result = MyLzss::compress(
+    match MyLzss::compress(
         lzss::SliceReader::new(&file),
         lzss::SliceWriter::new(&mut output),
-    );
-    match result {
+    ) {
         Ok(r) => {
             println!("success: {r}\n");
             println!("write compressed file.....");
             let mut file = fs::File::create(path.with_extension("lzss")).unwrap();
             file.write_all(&output[..r]).unwrap();
         }
-        Err(r) => println!("error: {r}\n"),
+        Err(r) => println!("{r}\n"),
     }
 
     println!("read back compressed file.....");
