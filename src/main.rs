@@ -1,6 +1,7 @@
 use lzss::Lzss;
 use std::fs;
 use std::io::Write;
+use std::path::Path;
 
 const COMPRESSED_SIZE: usize = 0xc00000;
 const EI: usize = 12; // offset bits
@@ -15,32 +16,28 @@ fn main() {
 
     println!("read original file.....");
     let filename = std::env::args().nth(1).expect("pass a file name");
-    let original = fs::read(filename.as_str()).expect("no such file");
-    let size = original.len();
-    // we need temporary copies here - fine
-    let compressed_file = String::from(filename.as_str()) + ".lzss";
-    let uncompressed_file = String::from(filename.as_str()) + ".unlzss";
+    let path = Path::new(filename.as_str());
+    let file = fs::read(path).expect("no such file");
+    let size = file.len();
 
     println!("compress.....");
     let mut output = vec![0; COMPRESSED_SIZE];
     let result = MyLzss::compress(
-        lzss::SliceReader::new(&original),
+        lzss::SliceReader::new(&file),
         lzss::SliceWriter::new(&mut output),
     );
     match result {
         Ok(r) => {
             println!("success: {r}\n");
             println!("write compressed file.....");
-            // this here needs to be a temporary copy
-            let mut file = fs::File::create(compressed_file.as_str()).unwrap();
+            let mut file = fs::File::create(path.with_extension("lzss")).unwrap();
             file.write_all(&output[..r]).unwrap();
         }
         Err(r) => println!("error: {r}\n"),
     }
 
     println!("read back compressed file.....");
-    // because compressed_file is used twice - though only to read from...?!
-    let compressed = fs::read(compressed_file.as_str()).expect("compressed file got lost");
+    let compressed = fs::read(path.with_extension("lzss")).expect("compressed file got lost");
 
     println!("decompress.....");
     let mut output = vec![0; size];
@@ -52,7 +49,7 @@ fn main() {
     match result {
         Ok(r) => {
             println!("success: {r}\n");
-            let mut file = fs::File::create(uncompressed_file).unwrap();
+            let mut file = fs::File::create(path.with_extension("unlzss")).unwrap();
             file.write_all(&output).unwrap();
         }
         Err(r) => println!("error: {r}\n"),
