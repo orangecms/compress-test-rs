@@ -29,28 +29,10 @@ fn main() {
         Ok(r) => {
             println!("success: {r}\n");
             println!("write compressed file.....");
-            let mut file = fs::File::create(path.with_extension("lzss")).unwrap();
+            let mut file = fs::File::create(path.with_extension("ore")).unwrap();
+            file.write_all(&(r as u32).to_le_bytes()).unwrap();
             file.write_all(&output[..r]).unwrap();
         }
         Err(r) => println!("{r}\n"),
-    }
-
-    println!("read back compressed file.....");
-    let compressed = fs::read(path.with_extension("lzss")).expect("compressed file got lost");
-
-    println!("decompress.....");
-    let mut output = vec![0; size];
-    let result = MyLzss::decompress(
-        lzss::SliceReader::new(&compressed),
-        lzss::SliceWriter::new(&mut output),
-    );
-
-    match result {
-        Ok(r) => {
-            println!("success: {r}\n");
-            let mut file = fs::File::create(path.with_extension("unlzss")).unwrap();
-            file.write_all(&output).unwrap();
-        }
-        Err(r) => println!("error: {r}\n"),
     }
 }
